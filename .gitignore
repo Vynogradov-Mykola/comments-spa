@@ -1,0 +1,56 @@
+# ========================
+# Backend (.NET)
+# ========================
+
+# Build outputs
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.log
+*.user
+*.vs/
+
+# Rider/Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+packages/
+*.nuget.cache
+
+# Entity Framework migrations (если не нужно хранить)
+# Migrations/
+
+# ========================
+# Frontend (Angular / Node)
+# ========================
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build output
+dist/
+out-tsc/
+.angular/cache/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.iml
+
+# Misc
+.DS_Store
+Thumbs.db
+/.sass-cache
+__screenshots__/
+

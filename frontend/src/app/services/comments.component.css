@@ -1,0 +1,36 @@
+.comment-form {
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 18px;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.comment-form input,
+.comment-form textarea {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.form-actions { margin-top: 6px; }
+.form-actions button { margin-right: 8px; }
+
+.comments-container { margin-top: 12px; }
+
+.comment {
+  border: 1px solid #e0e0e0;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.comment .meta { font-size: 0.9em; color: #444; margin-bottom: 6px; display:flex; gap:8px; align-items:center;}
+.comment .meta .username { color: #111; }
+.comment .body p { margin: 4px 0; white-space: pre-wrap; }
+
+.comment-actions { margin-top: 6px; }
+.comment-actions button { margin-right: 6px; font-size: 0.85em; }

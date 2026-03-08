@@ -1,0 +1,63 @@
+<div class="comment-form">
+  <h3>Add comment</h3>
+
+  <input [(ngModel)]="userName" placeholder="User name" />
+  <input [(ngModel)]="email" placeholder="Email" />
+  <input [(ngModel)]="homePage" placeholder="Home page (optional)" />
+  <textarea [(ngModel)]="text" placeholder="Write a comment..."></textarea>
+
+  <div class="form-actions">
+    <button (click)="send()">Send (as new)</button>
+    <button *ngIf="replyToParentId" (click)="send()">Send reply</button>
+    <button *ngIf="replyToParentId" (click)="cancelReply()">Cancel reply</button>
+  </div>
+
+  <div *ngIf="replyToParentId" class="replying-to">
+    Replying to: <b>{{ replyToUserName }}</b> (id: {{ replyToParentId }})
+  </div>
+</div>
+
+<h3>Comments</h3>
+
+<div class="sort-controls">
+  <span>Sort by:</span>
+  <button (click)="setSort('userName')">
+    User Name {{ sortField==='userName' ? (sortOrder==='asc'?'↑':'↓') : '' }}
+  </button>
+  <button (click)="setSort('email')">
+    Email {{ sortField==='email' ? (sortOrder==='asc'?'↑':'↓') : '' }}
+  </button>
+  <button (click)="setSort('createdAt')">
+    Date {{ sortField==='createdAt' ? (sortOrder==='asc'?'↑':'↓') : '' }}
+  </button>
+</div>
+
+<div class="comments-container">
+  <ng-container *ngFor="let root of commentsTree">
+    <ng-container *ngTemplateOutlet="commentTpl; context: { $implicit: root, level: 0 }"></ng-container>
+  </ng-container>
+</div>
+
+<ng-template #commentTpl let-comment let-level="level">
+  <div class="comment" [style.marginLeft.px]="level * 18">
+    <div class="meta">
+      <b class="username">{{ comment.userName ?? comment.UserName }}</b>
+      <span class="email">{{ comment.email ?? comment.Email }}</span>
+      <span class="date">{{ comment.createdAt || comment.CreatedAt | date:'short' }}</span>
+    </div>
+
+    <div class="body">
+      <p>{{ comment.commentText ?? comment.CommentText }}</p>
+      <div class="comment-actions">
+        <button (click)="reply(comment)">Reply</button>
+        <button (click)="send(comment.id)">Reply & send immediately</button>
+      </div>
+    </div>
+
+    <div *ngIf="comment.children?.length">
+      <ng-container *ngFor="let ch of comment.children">
+        <ng-container *ngTemplateOutlet="commentTpl; context: { $implicit: ch, level: level + 1 }"></ng-container>
+      </ng-container>
+    </div>
+  </div>
+</ng-template>
