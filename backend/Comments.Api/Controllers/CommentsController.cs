@@ -102,7 +102,12 @@ public class CommentsController : ControllerBase
         var safeUserName = dto.UserName.Trim();
         
         var safeHomePage = dto.HomePage?.Trim();
-        var safeCommentText = Regex.Replace(dto.CommentText, "<.*?>", "");
+        var safeCommentText = HtmlSanitizer.Sanitize(dto.CommentText.Trim());
+
+        if (!HtmlSanitizer.IsValidXhtml(safeCommentText))
+        {
+            return BadRequest("Invalid HTML structure");
+        }
         var user = await _db.Users.FirstOrDefaultAsync(u =>
             u.Email == dto.Email && u.UserName == safeUserName);
 

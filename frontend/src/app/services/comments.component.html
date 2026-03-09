@@ -70,7 +70,7 @@
 
     <div class="body">
 
-      <p>{{ comment.commentText ?? comment.CommentText }}</p>
+      <p [innerHTML]="comment.commentText ?? comment.CommentText"></p>
 
       <!-- FILE -->
       <div *ngIf="comment.fileBase64" class="comment-file">

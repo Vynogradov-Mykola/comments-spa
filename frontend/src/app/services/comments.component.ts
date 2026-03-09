@@ -72,10 +72,33 @@ totalPages = 0;
       // 4. строим дерево
       this.commentsTree = this.buildTree(pageComments);
 
+      // 5. Подготавливаем HTML для безопасного рендеринга
+      this.prepareCommentHtml(this.commentsTree);
+
       try { this.cdr.detectChanges(); } catch {}
 
     },
     error: (err) => console.error(err)
+  });
+}
+prepareCommentHtml(comments: any[]) {
+  comments.forEach(c => {
+    // Берем текст комментария
+    let text = c.commentText ?? c.CommentText;
+
+    if (text) {
+      // Добавляем target="_blank" и rel="noopener noreferrer" к ссылкам
+      text = text.replace(
+        /<a /g,
+        '<a target="_blank" rel="noopener noreferrer" '
+      );
+
+      // Сохраняем в новое поле для рендеринга
+      c.safeHtml = text;
+    }
+
+    // Рекурсивно для детей
+    if (c.children?.length) this.prepareCommentHtml(c.children);
   });
 }
 sortFlat(arr: any[]) {
@@ -358,10 +381,22 @@ send(parentId?: string | null) {
       this.load();
       this.loadCaptcha();
     },
-    error: () => {
-      alert('Error creating comment or invalid CAPTCHA');
-      this.loadCaptcha();
+   error: (err: any) => {
+    // Попытка показать сообщение от сервера
+    let msg = 'Unknown error';
+    
+    // err.error обычно содержит строку с сообщением
+    if (typeof err.error === 'string') {
+      msg = err.error;
+    } 
+    // Если сервер вернул JSON { message: "..." }
+    else if (err.error?.message) {
+      msg = err.error.message;
     }
+
+    alert(msg);       // ✅ Показываем реальное сообщение
+    this.loadCaptcha(); // обновляем капчу
+  }
   });
 }
 
