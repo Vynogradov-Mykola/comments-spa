@@ -47,7 +47,7 @@ services:
       - db-init
     environment:
       ConnectionStrings__DefaultConnection: "Server=db;Database=CommentsDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;"
-
+      System.Drawing.EnableUnixSupport: "1"
   frontend:
     build:
       context: ./frontend

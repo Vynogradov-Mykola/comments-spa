@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Comments.Api.Data;
 using Comments.Api.Models;
-
+using Comments.Api.Services;
 namespace Comments.Api.Controllers;
 
 [ApiController]
@@ -10,10 +10,14 @@ namespace Comments.Api.Controllers;
 public class CommentsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly CaptchaService _captcha;
+    private readonly ILogger<CommentsController> _logger;
 
-    public CommentsController(AppDbContext db)
+    public CommentsController(AppDbContext db, CaptchaService captcha, ILogger<CommentsController> logger)
     {
         _db = db;
+        _captcha = captcha;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -58,6 +62,16 @@ public class CommentsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateComment([FromBody] CommentCreateDto dto)
     {
+        // Логирование капчи
+        var expected = _captcha.GetCode(dto.CaptchaId);
+        _logger.LogInformation("[Captcha Validation] Front sent: {Front}, Server expected: {Expected}",
+            dto.CaptchaCode, expected);
+
+        if (!_captcha.Validate(dto.CaptchaId, dto.CaptchaCode))
+        {
+            return BadRequest("Invalid CAPTCHA");
+        }
+
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.UserName == dto.UserName);
         if (user == null)
         {
@@ -96,4 +110,7 @@ public class CommentCreateDto
     public string? HomePage { get; set; }
     public string CommentText { get; set; } = null!;
     public Guid? ParentId { get; set; }
+
+    public string CaptchaId { get; set; } = null!;
+    public string CaptchaCode { get; set; } = null!;
 }

@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Comments.Api.Data;
+using Comments.Api.Services;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 // 1. Добавляем CORS
@@ -11,10 +14,12 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:4200") // фронтенд
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials()
+                  .WithExposedHeaders("X-Captcha-Id");
         });
 });
-
+builder.Services.AddSingleton<CaptchaService>();
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
@@ -32,13 +37,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-/*
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-}
-*/
+
 
 // 2. Используем CORS
 app.UseCors("AllowAngular");
