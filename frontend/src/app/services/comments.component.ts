@@ -349,13 +349,26 @@ decodeBase64ToText(base64: string): string {
     return '';
   }
 }
-
+validateForm(): string | null {
+  if (!this.userName.trim()) return "User name is required";
+  if (!this.email.trim()) return "Email is required";
+  if (this.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email))
+    return "Invalid email format";
+  if (!this.text?.trim() && !this.previewText && !this.selectedFile)
+    return "Comment or file required";
+  if (!this.captchaCode.trim()) return "CAPTCHA is required";
+  return null;
+}
 send(parentId?: string | null) {
   const targetParent = parentId ?? this.replyToParentId ?? null;
 
   if (!this.text?.trim() && !this.previewText && !this.selectedFile)
     return; // нельзя отправить пустой комментарий
-
+const clientError = this.validateForm();
+  if (clientError) {
+    alert(clientError);
+    return;
+  }
   const formData = new FormData();
   formData.append('userName', this.userName);
   formData.append('email', this.email);
@@ -368,7 +381,7 @@ send(parentId?: string | null) {
   formData.append('captchaCode', this.captchaCode);
   if (targetParent) formData.append('parentId', targetParent);
   if (this.selectedFile) formData.append('file', this.selectedFile);
-
+  
   this.service.createComment(formData).subscribe({
     next: () => {
       this.text = '';
@@ -414,4 +427,53 @@ send(parentId?: string | null) {
     this.replyToUserName = null;
     this.text = '';
   }
+previewHtml: string | null = null;
+
+previewComment() {
+  let text = this.previewText ?? this.text;
+  if (!text) {
+    alert("Nothing to preview");
+    return;
+  }
+
+  // Добавляем target="_blank" к ссылкам
+  text = text.replace(
+    /<a /g,
+    '<a target="_blank" rel="noopener noreferrer" '
+  );
+
+  this.previewHtml = text;
+}
+insertTag(tag: string) {
+  const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = textarea.value.substring(start, end);
+  const before = textarea.value.substring(0, start);
+  const after = textarea.value.substring(end);
+
+  textarea.value = `${before}<${tag}>${selected}</${tag}>${after}`;
+  textarea.focus();
+  this.text = textarea.value;
+}
+
+insertLink() {
+  const url = prompt("Enter URL");
+  if (!url) return;
+
+  const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = textarea.value.substring(start, end) || "link text";
+  const before = textarea.value.substring(0, start);
+  const after = textarea.value.substring(end);
+
+  textarea.value = `${before}<a href="${url}">${selected}</a>${after}`;
+  textarea.focus();
+  this.text = textarea.value;
+}
 }

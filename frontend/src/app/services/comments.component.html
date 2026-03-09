@@ -2,6 +2,14 @@
 
   <h3>Add comment</h3>
 
+  <!-- HTML-теги панель -->
+  <div class="html-toolbar">
+    <button type="button" (click)="insertTag('i')"><i>i</i></button>
+    <button type="button" (click)="insertTag('strong')"><strong>B</strong></button>
+    <button type="button" (click)="insertTag('code')">Code</button>
+    <button type="button" (click)="insertLink()">Link</button>
+  </div>
+
   <input [(ngModel)]="userName" placeholder="User name" />
   <input [(ngModel)]="email" placeholder="Email" />
   <input [(ngModel)]="homePage" placeholder="Home page (optional)" />
@@ -26,20 +34,24 @@
       style="cursor:pointer"
       title="Click to refresh captcha"
     />
-    <input
-      [(ngModel)]="captchaCode"
-      placeholder="Enter CAPTCHA"
-    />
+    <input [(ngModel)]="captchaCode" placeholder="Enter CAPTCHA" />
   </div>
 
   <div class="form-actions">
-    <button (click)="send()">Send (as new)</button>
+    <button (click)="send()">Send</button>
     <button *ngIf="replyToParentId" (click)="send()">Send reply</button>
     <button *ngIf="replyToParentId" (click)="cancelReply()">Cancel reply</button>
+    <button (click)="previewComment()">Preview</button>
   </div>
 
   <div *ngIf="replyToParentId" class="replying-to">
     Replying to: <b>{{ replyToUserName }}</b>
+  </div>
+
+  <!-- Preview комментария -->
+  <div *ngIf="previewHtml" class="comment-preview">
+    <h4>Preview:</h4>
+    <p [innerHTML]="previewHtml"></p>
   </div>
 
 </div>
@@ -70,32 +82,26 @@
 
     <div class="body">
 
-      <p [innerHTML]="comment.commentText ?? comment.CommentText"></p>
+      <!-- Используем safeHtml для рендеринга -->
+      <p [innerHTML]="comment.safeHtml || comment.commentText || comment.CommentText"></p>
 
       <!-- FILE -->
       <div *ngIf="comment.fileBase64" class="comment-file">
 
         <!-- IMAGE -->
         <div *ngIf="isImage(comment.fileName)" class="comment-image">
-
           <img
             [src]="getFileDataUrl(comment)"
             class="comment-preview"
             (click)="openImage(comment)"
           />
-
         </div>
 
         <!-- TEXT -->
         <div *ngIf="isText(comment.fileName)" class="comment-textfile">
-
-          <div
-            class="text-preview"
-            (click)="openText(comment)"
-          >
+          <div class="text-preview" (click)="openText(comment)">
             Click to open TXT
           </div>
-
         </div>
 
       </div>
@@ -119,30 +125,15 @@
 
 </ng-template>
 
-
 <!-- FILE VIEWER -->
-
 <div class="file-viewer" *ngIf="viewerOpen" (click)="closeViewer()">
-
   <div class="viewer-content" (click)="$event.stopPropagation()">
-
     <button class="viewer-close" (click)="closeViewer()">✕</button>
 
     <!-- IMAGE -->
-    <img
-      *ngIf="viewerType === 'image'"
-      [src]="viewerContent"
-      class="viewer-image"
-    />
+    <img *ngIf="viewerType === 'image'" [src]="viewerContent" class="viewer-image" />
 
     <!-- TEXT -->
-    <pre
-      *ngIf="viewerType === 'text'"
-      class="viewer-text"
-    >
-{{ viewerContent }}
-    </pre>
-
+    <pre *ngIf="viewerType === 'text'" class="viewer-text">{{ viewerContent }}</pre>
   </div>
-
 </div>

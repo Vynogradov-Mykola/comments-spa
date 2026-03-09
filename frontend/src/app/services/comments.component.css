@@ -123,7 +123,29 @@
   color:white;
   cursor:pointer;
 }
+.comment:hover {
+  transform: scale(1.01);
+  transition: transform 0.2s ease;
+  background: #f9f9f9;
+}
 
+.comment-preview {
+  border: 1px solid #ddd;
+  padding: 6px;
+  background: #fefefe;
+  margin-top: 4px;
+}
+
+.html-toolbar button {
+  margin-right: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.html-toolbar button:hover {
+  background-color: #eee;
+  transform: scale(1.1);
+}
 @keyframes fadeIn{
   from{opacity:0}
   to{opacity:1}
