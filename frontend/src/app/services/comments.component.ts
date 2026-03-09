@@ -20,7 +20,10 @@ export class CommentsComponent implements OnInit {
   userName = '';
   email = '';
   homePage = '';
-
+page = 1;
+pageSize = 25;
+totalComments = 0;
+totalPages = 0;
   // CAPTCHA
   captchaImage = '';
   captchaId = '';
@@ -44,19 +47,65 @@ export class CommentsComponent implements OnInit {
     this.loadCaptcha();
   }
 
-  load() {
-    this.service.getComments(this.sortField, this.sortOrder).subscribe({
-      next: (data: any) => {
-         console.log('Comments received from server:', data); // ✅ выводим всё, что пришло
-        this.commentsFlat = Array.isArray(data) ? data : [];
-        this.commentsTree = this.buildTree(this.commentsFlat);
-        this.sortTree(this.commentsTree);
-        try { this.cdr.detectChanges(); } catch {}
-      },
-      error: (err) => console.error('Error loading comments', err)
-    });
-  }
+ load() {
+  this.service.getComments(this.sortField, this.sortOrder).subscribe({
+    next: (data: any) => {
 
+      this.commentsFlat = Array.isArray(data) ? data : [];
+
+      // 1. СНАЧАЛА сортируем весь список
+      this.sortFlat(this.commentsFlat);
+
+      // 2. считаем страницы
+      this.totalComments = this.commentsFlat.length;
+      this.totalPages = Math.ceil(this.totalComments / this.pageSize);
+
+      // 3. берём нужную страницу
+      const start = (this.page - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      const pageComments = this.commentsFlat.slice(start, end);
+
+      // 4. строим дерево
+      this.commentsTree = this.buildTree(pageComments);
+
+      try { this.cdr.detectChanges(); } catch {}
+
+    },
+    error: (err) => console.error(err)
+  });
+}
+sortFlat(arr: any[]) {
+
+  arr.sort((a, b) => {
+
+    let valA = a[this.sortField];
+    let valB = b[this.sortField];
+
+    if (this.sortField === 'createdAt') {
+      valA = new Date(valA).getTime();
+      valB = new Date(valB).getTime();
+    }
+
+    if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1;
+
+    return 0;
+  });
+
+}
+nextPage() {
+  if (this.page < this.totalPages) {
+    this.page++;
+    this.load();
+  }
+}
+
+prevPage() {
+  if (this.page > 1) {
+    this.page--;
+    this.load();
+  }
+}
   loadCaptcha() {
   this.service.getCaptcha().subscribe(res => {
 
@@ -213,15 +262,16 @@ onFileSelected(event: any) {
 
   setSort(field: 'userName' | 'email' | 'createdAt') {
 
-    if (this.sortField === field)
-      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-    else {
-      this.sortField = field;
-      this.sortOrder = 'asc';
-    }
-
-    this.sortTree(this.commentsTree);
+  if (this.sortField === field)
+    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+  else {
+    this.sortField = field;
+    this.sortOrder = 'asc';
   }
+
+  this.page = 1;   // сброс на первую страницу
+  this.load();     // ✅ заново загрузить и отсортировать
+}
   
 // Проверка типа файла
 isImage(fileName: string | null | undefined): boolean {

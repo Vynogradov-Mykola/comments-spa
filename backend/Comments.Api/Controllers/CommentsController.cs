@@ -6,6 +6,7 @@ using Comments.Api.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
+
 namespace Comments.Api.Controllers;
 
 [ApiController]
