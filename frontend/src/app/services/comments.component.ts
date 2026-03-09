@@ -33,6 +33,10 @@ totalPages = 0;
   replyToParentId: string | null = null;
   replyToUserName: string | null = null;
 
+  viewerOpen = false;
+  viewerType: 'image' | 'text' | null = null;
+  viewerContent = '';
+
   // sorting
   sortField: 'userName' | 'email' | 'createdAt' = 'createdAt';
   sortOrder: 'asc' | 'desc' = 'desc';
@@ -105,6 +109,27 @@ prevPage() {
     this.page--;
     this.load();
   }
+}
+openImage(comment: any) {
+
+  this.viewerType = 'image';
+  this.viewerContent = this.getFileDataUrl(comment) ?? '';
+  this.viewerOpen = true;
+
+}
+openText(comment: any) {
+
+  this.viewerType = 'text';
+  this.viewerContent = this.decodeBase64ToText(comment.fileBase64);
+  this.viewerOpen = true;
+
+}
+closeViewer() {
+
+  this.viewerOpen = false;
+  this.viewerContent = '';
+  this.viewerType = null;
+
 }
   loadCaptcha() {
   this.service.getCaptcha().subscribe(res => {

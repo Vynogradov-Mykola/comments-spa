@@ -46,19 +46,6 @@
 
 <h3>Comments</h3>
 
-<div class="sort-controls">
-  <span>Sort by:</span>
-  <button (click)="setSort('userName')">
-    User Name {{ sortField==='userName' ? (sortOrder==='asc'?'↑':'↓') : '' }}
-  </button>
-  <button (click)="setSort('email')">
-    Email {{ sortField==='email' ? (sortOrder==='asc'?'↑':'↓') : '' }}
-  </button>
-  <button (click)="setSort('createdAt')">
-    Date {{ sortField==='createdAt' ? (sortOrder==='asc'?'↑':'↓') : '' }}
-  </button>
-</div>
-
 <div class="comments-container">
 
   <ng-container *ngFor="let root of commentsTree">
@@ -82,32 +69,36 @@
     </div>
 
     <div class="body">
+
       <p>{{ comment.commentText ?? comment.CommentText }}</p>
 
-      <!-- Файл комментария -->
-<div *ngIf="comment.fileBase64" class="comment-file">
+      <!-- FILE -->
+      <div *ngIf="comment.fileBase64" class="comment-file">
 
-  <!-- Изображение -->
-  <div *ngIf="isImage(comment.fileName)" class="comment-image">
-    <img
-      [src]="getFileDataUrl(comment)"
-      alt="Image"
-      style="max-width:320px; max-height:240px;"
-    />
-  </div>
+        <!-- IMAGE -->
+        <div *ngIf="isImage(comment.fileName)" class="comment-image">
 
-  <!-- Текстовый файл -->
-  <div *ngIf="isText(comment.fileName)" class="comment-textfile">
-    <pre>{{ decodeBase64ToText(comment.fileBase64) }}</pre>
+          <img
+            [src]="getFileDataUrl(comment)"
+            class="comment-preview"
+            (click)="openImage(comment)"
+          />
 
-    <a
-      [href]="getFileDataUrl(comment)"
-      [download]="comment.fileName">
-      Download TXT
-    </a>
-  </div>
+        </div>
 
-</div>
+        <!-- TEXT -->
+        <div *ngIf="isText(comment.fileName)" class="comment-textfile">
+
+          <div
+            class="text-preview"
+            (click)="openText(comment)"
+          >
+            Click to open TXT
+          </div>
+
+        </div>
+
+      </div>
 
       <div class="comment-actions">
         <button (click)="reply(comment)">Reply</button>
@@ -127,14 +118,31 @@
   </div>
 
 </ng-template>
-<div class="pagination">
-  <button (click)="prevPage()" [disabled]="page === 1">
-    ← Previous
-  </button>
 
-  <span>Page {{page}} / {{totalPages}}</span>
 
-  <button (click)="nextPage()" [disabled]="page === totalPages">
-    Next →
-  </button>
+<!-- FILE VIEWER -->
+
+<div class="file-viewer" *ngIf="viewerOpen" (click)="closeViewer()">
+
+  <div class="viewer-content" (click)="$event.stopPropagation()">
+
+    <button class="viewer-close" (click)="closeViewer()">✕</button>
+
+    <!-- IMAGE -->
+    <img
+      *ngIf="viewerType === 'image'"
+      [src]="viewerContent"
+      class="viewer-image"
+    />
+
+    <!-- TEXT -->
+    <pre
+      *ngIf="viewerType === 'text'"
+      class="viewer-text"
+    >
+{{ viewerContent }}
+    </pre>
+
+  </div>
+
 </div>

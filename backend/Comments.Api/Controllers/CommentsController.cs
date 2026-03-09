@@ -6,7 +6,10 @@ using Comments.Api.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
-
+using System.Text.Encodings.Web;
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+    
 namespace Comments.Api.Controllers;
 
 [ApiController]
@@ -23,12 +26,13 @@ public class CommentsController : ControllerBase
         _captcha = captcha;
         _logger = logger;
     }
+
     [HttpGet]
     public async Task<IActionResult> GetComments(
-    string? sortBy = "CreatedAt",
-    string sortOrder = "desc",
-    int skip = 0,
-    int take = 100)
+        string? sortBy = "CreatedAt",
+        string sortOrder = "desc",
+        int skip = 0,
+        int take = 100)
     {
         var query = _db.Comments.Include(c => c.User).AsQueryable();
 
@@ -66,20 +70,53 @@ public class CommentsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateComment([FromForm] CommentCreateDto dto)
     {
+        Console.WriteLine("===== CREATE COMMENT DEBUG =====");
+        Console.WriteLine($"UserName: {dto.UserName}");
+        Console.WriteLine($"Email: {dto.Email}");
+        Console.WriteLine($"HomePage: {dto.HomePage}");
+        Console.WriteLine($"CommentText: {dto.CommentText}");
+        Console.WriteLine($"ParentId: {dto.ParentId}");
+        Console.WriteLine($"CaptchaId: {dto.CaptchaId}");
+        Console.WriteLine($"CaptchaText: {dto.CaptchaCode}");
+        Console.WriteLine($"File: {(dto.File != null ? dto.File.FileName : "NULL")}");
+        Console.WriteLine("=================================");
         if (!_captcha.Validate(dto.CaptchaId, dto.CaptchaCode))
             return BadRequest("Invalid CAPTCHA");
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.UserName == dto.UserName);
+        if (string.IsNullOrWhiteSpace(dto.UserName) ||
+    string.IsNullOrWhiteSpace(dto.Email))
+        {
+            return BadRequest("Required fields missing");
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.CommentText) && dto.File == null)
+        {
+            return BadRequest("Comment or file required");
+        }
+        if (!string.IsNullOrWhiteSpace(dto.Email) &&
+    !new EmailAddressAttribute().IsValid(dto.Email))
+        {
+            return BadRequest("Invalid email");
+        }
+
+        var safeUserName = dto.UserName.Trim();
+        
+        var safeHomePage = dto.HomePage?.Trim();
+        var safeCommentText = Regex.Replace(dto.CommentText, "<.*?>", "");
+        var user = await _db.Users.FirstOrDefaultAsync(u =>
+            u.Email == dto.Email && u.UserName == safeUserName);
+
         if (user == null)
         {
             user = new User
             {
                 Id = Guid.NewGuid(),
-                UserName = dto.UserName,
+                UserName = safeUserName,
                 Email = dto.Email,
-                HomePage = dto.HomePage,
+                HomePage = safeHomePage,
                 CreatedAt = DateTime.UtcNow
             };
+
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
         }
@@ -90,10 +127,28 @@ public class CommentsController : ControllerBase
 
         if (dto.File != null)
         {
+            var allowedTypes = new[]
+            {
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "text/plain"
+            };
+
+            if (!allowedTypes.Contains(dto.File.ContentType))
+                return BadRequest("Unsupported file type");
+
+            if (dto.File.ContentType == "text/plain" && dto.File.Length > 100 * 1024)
+                return BadRequest("Text file too large");
+
+            if (dto.File.Length > 2 * 1024 * 1024)
+                return BadRequest("File too large");
+
             using var ms = new MemoryStream();
             await dto.File.CopyToAsync(ms);
             fileData = ms.ToArray();
-            fileName = dto.File.FileName;
+
+            fileName = Path.GetFileName(dto.File.FileName);
             fileContentType = dto.File.ContentType;
         }
 
@@ -101,7 +156,7 @@ public class CommentsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            CommentText = dto.CommentText, // вместо dto.Text
+            CommentText = safeCommentText,
             CreatedAt = DateTime.UtcNow,
             ParentId = dto.ParentId,
             FileData = fileData,
@@ -123,15 +178,16 @@ public class CommentsController : ControllerBase
             ParentId = comment.ParentId,
             FileName = comment.FileName,
             FileContentType = comment.FileContentType,
-            FileBase64 = comment.FileData != null ? Convert.ToBase64String(comment.FileData) : null
+            FileBase64 = comment.FileData != null
+                ? Convert.ToBase64String(comment.FileData)
+                : null
         };
 
         return Ok(result);
     }
-
 }
 
-    public class CommentCreateDto
+public class CommentCreateDto
 {
     public string UserName { get; set; } = null!;
     public string Email { get; set; } = null!;
