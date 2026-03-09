@@ -47,6 +47,7 @@ export class CommentsComponent implements OnInit {
   load() {
     this.service.getComments(this.sortField, this.sortOrder).subscribe({
       next: (data: any) => {
+         console.log('Comments received from server:', data); // ✅ выводим всё, что пришло
         this.commentsFlat = Array.isArray(data) ? data : [];
         this.commentsTree = this.buildTree(this.commentsFlat);
         this.sortTree(this.commentsTree);
@@ -73,6 +74,73 @@ export class CommentsComponent implements OnInit {
 
     console.log('Captcha ID:', this.captchaId);
   });
+}
+// Дополнительно в CommentsComponent
+selectedFile: File | null = null;
+previewImage: string | null = null;
+previewText: string | null = null;
+
+// Выбор файла
+onFileSelected(event: any) {
+  const file: File = event.target.files[0];
+  if (!file) return;
+
+  const ext = file.name.split('.').pop()?.toLowerCase();
+
+  // --- Изображение ---
+  if (['jpg', 'jpeg', 'png', 'gif'].includes(ext!)) {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => {
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        const maxWidth = 320;
+        const maxHeight = 240;
+        let { width, height } = img;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          this.previewImage = canvas.toDataURL(ext === 'png' ? 'image/png' : 'image/jpeg');
+
+          canvas.toBlob(blob => {
+            this.selectedFile = new File([blob!], file.name, { type: file.type });
+          }, file.type);
+        } else {
+          this.previewImage = reader.result as string;
+          this.selectedFile = file;
+        }
+      };
+    };
+
+    reader.readAsDataURL(file);
+    this.previewText = null;
+  }
+  // --- Текстовый файл ---
+  else if (ext === 'txt') {
+    if (file.size > 100 * 1024) {
+      alert('Text file too large (max 100kb)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => this.previewText = e.target?.result as string;
+    reader.readAsText(file);
+
+    this.selectedFile = file;
+    this.previewImage = null;
+  } else {
+    alert('Unsupported file type');
+  }
 }
   buildTree(comments: any[]): any[] {
 
@@ -154,48 +222,73 @@ export class CommentsComponent implements OnInit {
 
     this.sortTree(this.commentsTree);
   }
+  
+// Проверка типа файла
+isImage(fileName: string | null | undefined): boolean {
+  return !!fileName && /\.(jpg|jpeg|png|gif)$/i.test(fileName);
+}
 
-  send(parentId?: string | null) {
+isText(fileName: string | null | undefined): boolean {
+  return !!fileName && /\.txt$/i.test(fileName);
+}
 
-    const targetParent = parentId ?? this.replyToParentId ?? null;
+// Генерация DataURL
+getFileDataUrl(comment: any): string | null {
+  if (!comment.fileBase64 || !comment.fileContentType) return null;
+  return `data:${comment.fileContentType};base64,${comment.fileBase64}`;
+}
 
-    if (
-      !this.text?.trim() ||
-      !this.userName?.trim() ||
-      !this.email?.trim() ||
-      !this.captchaCode?.trim()
-    ) return;
-    console.log(this.captchaId);
-    console.log(this.captchaCode);
-    const payload: any = {
-      userName: this.userName,
-      email: this.email,
-      homePage: this.homePage,
-      commentText: this.text,
-      parentId: targetParent,
-      captchaId: this.captchaId,
-      captchaCode: this.captchaCode
-    };
-
-    this.service.createComment(payload).subscribe({
-
-      next: () => {
-
-        this.text = '';
-        this.replyToParentId = null;
-        this.replyToUserName = null;
-        this.captchaCode = '';
-
-        this.load();
-        this.loadCaptcha();
-      },
-
-      error: () => {
-        alert('Error creating comment or invalid CAPTCHA');
-        this.loadCaptcha();
-      }
-    });
+// Декодирование txt
+decodeBase64ToText(base64: string): string {
+  try {
+    return decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+  } catch {
+    return '';
   }
+}
+
+send(parentId?: string | null) {
+  const targetParent = parentId ?? this.replyToParentId ?? null;
+
+  if (!this.text?.trim() && !this.previewText && !this.selectedFile)
+    return; // нельзя отправить пустой комментарий
+
+  const formData = new FormData();
+  formData.append('userName', this.userName);
+  formData.append('email', this.email);
+  formData.append('homePage', this.homePage);
+
+  // Если есть текстовое превью (txt), используем его
+  formData.append('commentText', this.previewText ?? this.text);
+
+  formData.append('captchaId', this.captchaId);
+  formData.append('captchaCode', this.captchaCode);
+  if (targetParent) formData.append('parentId', targetParent);
+  if (this.selectedFile) formData.append('file', this.selectedFile);
+
+  this.service.createComment(formData).subscribe({
+    next: () => {
+      this.text = '';
+      this.selectedFile = null;
+      this.previewImage = null;
+      this.previewText = null;
+      this.replyToParentId = null;
+      this.replyToUserName = null;
+      this.captchaCode = '';
+      this.load();
+      this.loadCaptcha();
+    },
+    error: () => {
+      alert('Error creating comment or invalid CAPTCHA');
+      this.loadCaptcha();
+    }
+  });
+}
 
   reply(comment: any) {
 

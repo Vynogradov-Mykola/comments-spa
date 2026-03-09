@@ -23,3 +23,21 @@
   padding: 5px;
   border-radius: 3px;
 }
+.preview-image img {
+  max-width: 320px;
+  max-height: 240px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 8px;
+  transition: all 0.3s ease;
+}
+
+.preview-text pre {
+  background: #f0f0f0;
+  padding: 6px;
+  border-radius: 4px;
+  margin-top: 8px;
+  max-width: 400px;
+  white-space: pre-wrap;
+  transition: all 0.3s ease;
+}

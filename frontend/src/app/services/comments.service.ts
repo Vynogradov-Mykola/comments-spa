@@ -15,9 +15,9 @@ export class CommentsService {
     return this.http.get(`${this.api}?sortBy=${sortBy}&sortOrder=${sortOrder}&skip=0&take=100`);
   }
 
-  createComment(data: any) {
-    return this.http.post(this.api, data);
-  }
+  createComment(data: FormData) {
+  return this.http.post(this.api, data); // FormData теперь вместо JSON
+}
 
   getCaptcha() {
     return this.http.get(this.captchaApi, {

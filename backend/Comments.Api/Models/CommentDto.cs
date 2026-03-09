@@ -12,7 +12,8 @@ namespace Comments.Api.Models
         public string? HomePage { get; set; }
 
         public Guid? ParentId { get; set; }
-        public string? FilePath { get; set; }
-        public string? ImagePath { get; set; }
+        public string? FileBase64 { get; set; }
+        public string? FileName { get; set; }
+        public string? FileContentType { get; set; }
     }
 }

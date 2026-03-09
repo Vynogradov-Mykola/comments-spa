@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Comments.Api.Data;
 using Comments.Api.Models;
 using Comments.Api.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Processing;
 namespace Comments.Api.Controllers;
 
 [ApiController]
@@ -19,13 +22,12 @@ public class CommentsController : ControllerBase
         _captcha = captcha;
         _logger = logger;
     }
-
     [HttpGet]
     public async Task<IActionResult> GetComments(
-        string? sortBy = "CreatedAt",
-        string sortOrder = "desc",
-        int skip = 0,
-        int take = 100)
+    string? sortBy = "CreatedAt",
+    string sortOrder = "desc",
+    int skip = 0,
+    int take = 100)
     {
         var query = _db.Comments.Include(c => c.User).AsQueryable();
 
@@ -51,8 +53,9 @@ public class CommentsController : ControllerBase
                 Email = c.User.Email,
                 HomePage = c.User.HomePage,
                 ParentId = c.ParentId,
-                FilePath = c.FilePath,
-                ImagePath = c.ImagePath
+                FileName = c.FileName,
+                FileContentType = c.FileContentType,
+                FileBase64 = c.FileData != null ? Convert.ToBase64String(c.FileData) : null
             })
             .ToListAsync();
 
@@ -60,17 +63,10 @@ public class CommentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateComment([FromBody] CommentCreateDto dto)
+    public async Task<IActionResult> CreateComment([FromForm] CommentCreateDto dto)
     {
-        // Логирование капчи
-        var expected = _captcha.GetCode(dto.CaptchaId);
-        _logger.LogInformation("[Captcha Validation] Front sent: {Front}, Server expected: {Expected}",
-            dto.CaptchaCode, expected);
-
         if (!_captcha.Validate(dto.CaptchaId, dto.CaptchaCode))
-        {
             return BadRequest("Invalid CAPTCHA");
-        }
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.UserName == dto.UserName);
         if (user == null)
@@ -87,30 +83,64 @@ public class CommentsController : ControllerBase
             await _db.SaveChangesAsync();
         }
 
+        byte[]? fileData = null;
+        string? fileName = null;
+        string? fileContentType = null;
+
+        if (dto.File != null)
+        {
+            using var ms = new MemoryStream();
+            await dto.File.CopyToAsync(ms);
+            fileData = ms.ToArray();
+            fileName = dto.File.FileName;
+            fileContentType = dto.File.ContentType;
+        }
+
         var comment = new Comment
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            CommentText = dto.CommentText,
+            CommentText = dto.CommentText, // вместо dto.Text
+            CreatedAt = DateTime.UtcNow,
             ParentId = dto.ParentId,
-            CreatedAt = DateTime.UtcNow
+            FileData = fileData,
+            FileName = fileName,
+            FileContentType = fileContentType
         };
 
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
 
-        return Ok(comment);
+        var result = new CommentDto
+        {
+            Id = comment.Id,
+            CommentText = comment.CommentText,
+            CreatedAt = comment.CreatedAt,
+            UserName = user.UserName,
+            Email = user.Email,
+            HomePage = user.HomePage,
+            ParentId = comment.ParentId,
+            FileName = comment.FileName,
+            FileContentType = comment.FileContentType,
+            FileBase64 = comment.FileData != null ? Convert.ToBase64String(comment.FileData) : null
+        };
+
+        return Ok(result);
     }
+
 }
 
-public class CommentCreateDto
+    public class CommentCreateDto
 {
     public string UserName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string? HomePage { get; set; }
     public string CommentText { get; set; } = null!;
     public Guid? ParentId { get; set; }
-
     public string CaptchaId { get; set; } = null!;
     public string CaptchaCode { get; set; } = null!;
+    public IFormFile? File { get; set; }
+    public byte[]? FileData { get; set; }
+    public string? FileName { get; set; }
+    public string? FileContentType { get; set; }
 }

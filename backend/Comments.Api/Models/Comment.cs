@@ -15,8 +15,7 @@ public class Comment
     public string CommentText { get; set; }
 
     public DateTime CreatedAt { get; set; }
-
-    public string? ImagePath { get; set; }
-
-    public string? FilePath { get; set; }
+    public byte[]? FileData { get; set; }
+    public string? FileName { get; set; }
+    public string? FileContentType { get; set; }
 }

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Comments.Api.Data;
 using Comments.Api.Services;
-
+using Microsoft.Extensions.FileProviders;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,7 +37,21 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+// Путь к папке uploads на сервере
+var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
 
+// Создаём папку, если не существует
+if (!Directory.Exists(uploadsDir))
+{
+    Directory.CreateDirectory(uploadsDir);
+}
+
+// Разрешаем отдавать статические файлы из папки uploads
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsDir),
+    RequestPath = "/uploads"
+});
 
 // 2. Используем CORS
 app.UseCors("AllowAngular");

@@ -5,23 +5,31 @@
   <input [(ngModel)]="userName" placeholder="User name" />
   <input [(ngModel)]="email" placeholder="Email" />
   <input [(ngModel)]="homePage" placeholder="Home page (optional)" />
+  <input type="file" (change)="onFileSelected($event)" accept=".txt,image/png,image/jpeg,image/gif" />
+
+  <!-- Preview изображения -->
+  <div *ngIf="previewImage" class="preview-image">
+    <img [src]="previewImage" alt="Preview" />
+  </div>
+
+  <!-- Preview текстового файла -->
+  <div *ngIf="previewText" class="preview-text">
+    <pre>{{ previewText }}</pre>
+  </div>
 
   <textarea [(ngModel)]="text" placeholder="Write a comment..."></textarea>
 
   <div class="captcha">
-
     <img
       [src]="captchaImage"
       (click)="loadCaptcha()"
       style="cursor:pointer"
       title="Click to refresh captcha"
     />
-
     <input
       [(ngModel)]="captchaCode"
       placeholder="Enter CAPTCHA"
     />
-
   </div>
 
   <div class="form-actions">
@@ -39,31 +47,24 @@
 <h3>Comments</h3>
 
 <div class="sort-controls">
-
   <span>Sort by:</span>
-
   <button (click)="setSort('userName')">
     User Name {{ sortField==='userName' ? (sortOrder==='asc'?'↑':'↓') : '' }}
   </button>
-
   <button (click)="setSort('email')">
     Email {{ sortField==='email' ? (sortOrder==='asc'?'↑':'↓') : '' }}
   </button>
-
   <button (click)="setSort('createdAt')">
     Date {{ sortField==='createdAt' ? (sortOrder==='asc'?'↑':'↓') : '' }}
   </button>
-
 </div>
 
 <div class="comments-container">
 
   <ng-container *ngFor="let root of commentsTree">
-
     <ng-container
       *ngTemplateOutlet="commentTpl; context: { $implicit: root, level: 0 }">
     </ng-container>
-
   </ng-container>
 
 </div>
@@ -73,20 +74,40 @@
   <div class="comment" [style.marginLeft.px]="level * 18">
 
     <div class="meta">
-
       <b class="username">{{ comment.userName ?? comment.UserName }}</b>
-
       <span class="email">{{ comment.email ?? comment.Email }}</span>
-
       <span class="date">
         {{ comment.createdAt || comment.CreatedAt | date:'short' }}
       </span>
-
     </div>
 
     <div class="body">
-
       <p>{{ comment.commentText ?? comment.CommentText }}</p>
+
+      <!-- Файл комментария -->
+<div *ngIf="comment.fileBase64" class="comment-file">
+
+  <!-- Изображение -->
+  <div *ngIf="isImage(comment.fileName)" class="comment-image">
+    <img
+      [src]="getFileDataUrl(comment)"
+      alt="Image"
+      style="max-width:320px; max-height:240px;"
+    />
+  </div>
+
+  <!-- Текстовый файл -->
+  <div *ngIf="isText(comment.fileName)" class="comment-textfile">
+    <pre>{{ decodeBase64ToText(comment.fileBase64) }}</pre>
+
+    <a
+      [href]="getFileDataUrl(comment)"
+      [download]="comment.fileName">
+      Download TXT
+    </a>
+  </div>
+
+</div>
 
       <div class="comment-actions">
         <button (click)="reply(comment)">Reply</button>
@@ -96,15 +117,11 @@
     </div>
 
     <div *ngIf="comment.children?.length">
-
       <ng-container *ngFor="let ch of comment.children">
-
         <ng-container
           *ngTemplateOutlet="commentTpl; context: { $implicit: ch, level: level + 1 }">
         </ng-container>
-
       </ng-container>
-
     </div>
 
   </div>
