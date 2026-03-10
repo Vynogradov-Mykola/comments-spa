@@ -56,14 +56,6 @@
 
 
 
-.comment-preview{
-  max-width:160px;
-  max-height:120px;
-  cursor:pointer;
-  border-radius:6px;
-  transition: transform .2s ease;
-}
-
 .comment-preview:hover{
   transform: scale(1.08);
 }
@@ -129,13 +121,20 @@
   background: #f9f9f9;
 }
 
+
 .comment-preview {
-  border: 1px solid #ddd;
-  padding: 6px;
-  background: #fefefe;
-  margin-top: 4px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+  display: inline-block; /* контейнер растёт по содержимому */
+  max-width: 100%;
 }
 
+.comment-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
 .html-toolbar button {
   margin-right: 4px;
   padding: 2px 6px;

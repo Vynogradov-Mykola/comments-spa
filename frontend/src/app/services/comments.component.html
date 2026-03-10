@@ -48,11 +48,17 @@
     Replying to: <b>{{ replyToUserName }}</b>
   </div>
 
-  <!-- Preview комментария -->
-  <div *ngIf="previewHtml" class="comment-preview">
-    <h4>Preview:</h4>
-    <p [innerHTML]="previewHtml"></p>
-  </div>
+ <div *ngIf="previewHtml || previewImage || previewText" class="comment-preview">
+
+  <h4>Preview:</h4>
+
+  <p *ngIf="previewHtml" [innerHTML]="previewHtml"></p>
+
+  <img *ngIf="previewImage" [src]="previewImage">
+
+  <pre *ngIf="previewText">{{ previewText }}</pre>
+
+</div>
 
 </div>
 

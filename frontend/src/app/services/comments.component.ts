@@ -427,17 +427,19 @@ const clientError = this.validateForm();
 previewHtml: string | null = null;
 
 previewComment() {
-  let text = this.previewText ?? this.text;
-  if (!text) {
+  let text = this.text;
+
+  if (!text && !this.previewText && !this.previewImage) {
     alert("Nothing to preview");
     return;
   }
 
-  // Добавляем target="_blank" к ссылкам
-  text = text.replace(
-    /<a /g,
-    '<a target="_blank" rel="noopener noreferrer" '
-  );
+  if (text) {
+    text = text.replace(
+      /<a /g,
+      '<a target="_blank" rel="noopener noreferrer" '
+    );
+  }
 
   this.previewHtml = text;
 }
