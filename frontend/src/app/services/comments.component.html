@@ -2,14 +2,7 @@
 
   <h3>Add comment</h3>
 
-  <!-- HTML-теги панель -->
-  <div class="html-toolbar">
-    <button type="button" (click)="insertTag('i')"><i>i</i></button>
-    <button type="button" (click)="insertTag('strong')"><strong>B</strong></button>
-    <button type="button" (click)="insertTag('code')">Code</button>
-    <button type="button" (click)="insertLink()">Link</button>
-  </div>
-
+  
   <input [(ngModel)]="userName" placeholder="User name" />
   <input [(ngModel)]="email" placeholder="Email" />
   <input [(ngModel)]="homePage" placeholder="Home page (optional)" />
@@ -23,6 +16,13 @@
   <!-- Preview текстового файла -->
   <div *ngIf="previewText" class="preview-text">
     <pre>{{ previewText }}</pre>
+  </div>
+<!-- HTML-теги панель -->
+  <div class="html-toolbar">
+    <button type="button" (click)="insertTag('i')"><i>i</i></button>
+    <button type="button" (click)="insertTag('strong')"><strong>B</strong></button>
+    <button type="button" (click)="insertTag('code')">Code</button>
+    <button type="button" (click)="insertLink()">Link</button>
   </div>
 
   <textarea [(ngModel)]="text" placeholder="Write a comment..."></textarea>
