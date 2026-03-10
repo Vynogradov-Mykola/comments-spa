@@ -58,6 +58,21 @@
 
 <h3>Comments</h3>
 
+
+<div class="sort-controls">
+  <span>Sort by:</span>
+  <button (click)="setSort('userName')">
+    User Name {{ sortField==='userName' ? (sortOrder==='asc'?'↑':'↓') : '' }}
+  </button>
+  <button (click)="setSort('email')">
+    Email {{ sortField==='email' ? (sortOrder==='asc'?'↑':'↓') : '' }}
+  </button>
+  <button (click)="setSort('createdAt')">
+    Date {{ sortField==='createdAt' ? (sortOrder==='asc'?'↑':'↓') : '' }}
+  </button>
+</div>
+
+
 <div class="comments-container">
 
   <ng-container *ngFor="let root of commentsTree">
@@ -124,7 +139,16 @@
   </div>
 
 </ng-template>
+<div class="pagination">
+  <button (click)="prevPage()" [disabled]="page === 1">
+    ← Previous
+  </button>
 
+  <span>Page {{page}} / {{totalPages}}</span>
+
+  <button (click)="nextPage()" [disabled]="page === totalPages">
+    Next →
+  </button>
 <!-- FILE VIEWER -->
 <div class="file-viewer" *ngIf="viewerOpen" (click)="closeViewer()">
   <div class="viewer-content" (click)="$event.stopPropagation()">
