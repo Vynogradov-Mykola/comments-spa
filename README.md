@@ -35,6 +35,8 @@ Supports HTML tags, file uploads (images & text), CAPTCHA, pagination, and threa
 
 ```bash
 git clone https://github.com/Vynogradov-Mykola/comments-spa/
-cd repository
+cd path/to/comments-spa
 docker compose up --build
+```
 
+Page available on http://localhost:4200/
