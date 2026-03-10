@@ -373,10 +373,7 @@ const clientError = this.validateForm();
   formData.append('userName', this.userName);
   formData.append('email', this.email);
   formData.append('homePage', this.homePage);
-
-  // Если есть текстовое превью (txt), используем его
-  formData.append('commentText', this.previewText ?? this.text);
-
+  formData.append('commentText', this.text);
   formData.append('captchaId', this.captchaId);
   formData.append('captchaCode', this.captchaCode);
   if (targetParent) formData.append('parentId', targetParent);
